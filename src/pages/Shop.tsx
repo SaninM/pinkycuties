@@ -1,121 +1,94 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Filter, Grid, List, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import ProductCard from "@/components/ProductCard";
-import braceletImage from "@/assets/product-bracelet-1.jpg";
-import necklaceImage from "@/assets/product-necklace-1.jpg";
-import waistBeadsImage from "@/assets/product-waist-beads-1.jpg";
-import coupleSetImage from "@/assets/product-couple-set-1.jpg";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image_urls: string[];
+  colors: string[];
+  sizes: string[];
+  is_featured: boolean;
+  category_id: string;
+  created_at?: string;
+  categories?: {
+    name: string;
+    slug: string;
+  };
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 const Shop = () => {
   const [isGridView, setIsGridView] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPriceRange, setSelectedPriceRange] = useState("all");
+  const [sortBy, setSortBy] = useState("featured");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const allProducts = [
-    {
-      id: "1",
-      name: "Pink Serenity African Bead Bracelet",
-      price: 2500,
-      originalPrice: 3200,
-      image: braceletImage,
-      category: "Bracelets",
-      rating: 5,
-      reviews: 24,
-      isBestseller: true,
-    },
-    {
-      id: "2", 
-      name: "Heritage Multi-Strand Necklace",
-      price: 4800,
-      image: necklaceImage,
-      category: "Necklaces",
-      rating: 5,
-      reviews: 18,
-      isNew: true,
-    },
-    {
-      id: "3",
-      name: "Traditional Waist Beads Collection",
-      price: 1800,
-      image: waistBeadsImage,
-      category: "Waist Beads",
-      rating: 5,
-      reviews: 32,
-      isBestseller: true,
-    },
-    {
-      id: "4",
-      name: "Unity Couple Jewelry Set",
-      price: 6500,
-      originalPrice: 8000,
-      image: coupleSetImage,
-      category: "Couple Sets",
-      rating: 5,
-      reviews: 12,
-    },
-    {
-      id: "5",
-      name: "Royal Gold Bangle Set",
-      price: 3200,
-      image: braceletImage,
-      category: "Bangles",
-      rating: 5,
-      reviews: 15,
-    },
-    {
-      id: "6",
-      name: "Sunset Coral Necklace",
-      price: 3800,
-      image: necklaceImage,
-      category: "Necklaces",
-      rating: 4,
-      reviews: 21,
-      isNew: true,
-    },
-    {
-      id: "7",
-      name: "Earth Goddess Waist Beads",
-      price: 2200,
-      image: waistBeadsImage,
-      category: "Waist Beads",
-      rating: 5,
-      reviews: 28,
-    },
-    {
-      id: "8",
-      name: "Harmony Couple Bracelets",
-      price: 4200,
-      originalPrice: 5000,
-      image: coupleSetImage,
-      category: "Couple Sets",
-      rating: 5,
-      reviews: 8,
-    },
-  ];
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, []);
 
-  const categories = [
-    { value: "all", label: "All Products" },
-    { value: "Bracelets", label: "Bracelets" },
-    { value: "Necklaces", label: "Necklaces" },
-    { value: "Bangles", label: "Bangles" },
-    { value: "Waist Beads", label: "Waist Beads" },
-    { value: "Couple Sets", label: "Couple Sets" },
-  ];
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories (
+            name,
+            slug
+          )
+        `)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const priceRanges = [
     { value: "all", label: "All Prices" },
-    { value: "0-2000", label: "Under KSh 2,000" },
-    { value: "2000-4000", label: "KSh 2,000 - 4,000" },
-    { value: "4000-6000", label: "KSh 4,000 - 6,000" },
-    { value: "6000+", label: "Over KSh 6,000" },
+    { value: "0-30", label: "Under $30" },
+    { value: "30-60", label: "$30 - $60" },
+    { value: "60-100", label: "$60 - $100" },
+    { value: "100+", label: "Over $100" },
   ];
 
-  const filteredProducts = allProducts.filter(product => {
-    const categoryMatch = selectedCategory === "all" || product.category === selectedCategory;
+  const filteredProducts = products.filter(product => {
+    const categoryMatch = selectedCategory === "all" || product.categories?.slug === selectedCategory;
     
     let priceMatch = true;
     if (selectedPriceRange !== "all") {
@@ -128,6 +101,22 @@ const Shop = () => {
     }
     
     return categoryMatch && priceMatch;
+  });
+
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case "price-low":
+        return a.price - b.price;
+      case "price-high":
+        return b.price - a.price;
+      case "name":
+        return a.name.localeCompare(b.name);
+      case "newest":
+        return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+      case "featured":
+      default:
+        return b.is_featured ? 1 : -1;
+    }
   });
 
   return (
@@ -162,9 +151,10 @@ const Shop = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All Products</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                      <SelectItem key={category.id} value={category.slug}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -211,11 +201,11 @@ const Shop = () => {
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                {filteredProducts.length} products
+                {sortedProducts.length} products
               </span>
               {selectedCategory !== "all" && (
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  {categories.find(c => c.value === selectedCategory)?.label}
+                  {categories.find(c => c.slug === selectedCategory)?.name}
                   <button 
                     onClick={() => setSelectedCategory("all")}
                     className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
@@ -227,7 +217,7 @@ const Shop = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Select defaultValue="featured">
+              <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
@@ -236,6 +226,7 @@ const Shop = () => {
                   <SelectItem value="price-low">Price: Low to High</SelectItem>
                   <SelectItem value="price-high">Price: High to Low</SelectItem>
                   <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -261,18 +252,34 @@ const Shop = () => {
           </div>
 
           {/* Products Grid */}
-          <div className={`grid gap-6 ${
-            isGridView 
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
-              : "grid-cols-1"
-          }`}>
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className={`grid gap-6 ${
+              isGridView 
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
+                : "grid-cols-1"
+            }`}>
+              {sortedProducts.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                  image={product.image_urls[0] || "/placeholder.svg"}
+                  category={product.categories?.name || ""}
+                  rating={5}
+                  reviews={0}
+                  isBestseller={product.is_featured}
+                />
+              ))}
+            </div>
+          )}
 
           {/* No Products Message */}
-          {filteredProducts.length === 0 && (
+          {!loading && sortedProducts.length === 0 && (
             <div className="text-center py-12">
               <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">
