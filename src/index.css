@@ -8,35 +8,48 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Pinky Cuties Design System */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Pink color palette */
+    --primary: 340 82% 52%; /* Deep pink #FF69B4 */
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 340 100% 92%; /* Soft pink #FFD1DC */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 340 100% 97%;
+    --secondary-foreground: 340 82% 52%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 340 20% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Gold accent */
+    --accent: 51 100% 50%; /* Gold #FFD700 */
+    --accent-foreground: 0 0% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 340 20% 90%;
+    --input: 340 20% 95%;
+    --ring: 340 82% 52%;
 
-    --radius: 0.5rem;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(340 82% 52%), hsl(51 100% 50%));
+    --gradient-soft: linear-gradient(180deg, hsl(340 100% 97%), hsl(0 0% 100%));
+    --gradient-hero: linear-gradient(135deg, hsl(340 100% 92%), hsl(340 82% 52%));
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -2px hsl(340 82% 52% / 0.1);
+    --shadow-gold: 0 8px 30px -8px hsl(51 100% 50% / 0.3);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
